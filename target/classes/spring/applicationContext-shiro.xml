@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:context="http://www.springframework.org/schema/context" xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:aop="http://www.springframework.org/schema/aop" xmlns:tx="http://www.springframework.org/schema/tx"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+	http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.0.xsd
+	http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.0.xsd http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.0.xsd
+	http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-4.0.xsd">
+
+
+	<bean id="credentialsMatcher" class="org.apache.shiro.authc.credential.HashedCredentialsMatcher">
+		<!--加密算法-->
+		<property name="hashAlgorithmName" value="md5"/>
+		<!--md5加密的次数-->
+		<property name="hashIterations" value="1"/>
+	</bean>
+
+	<!--自定义的realm类,进行认证和授权-->
+	<bean id="myRealm" class="com.syc.perms.shiro.MyRealm">
+		<!--密码匹配器:对用户输入的密码按照某种加密方式进行匹配-->
+		<property name="credentialsMatcher" ref="credentialsMatcher"/>
+	</bean>
+
+	<!--缓存管理器:缓存的是某个用户的认证和授权信息-->
+	<bean id="cacheManager" class="org.apache.shiro.cache.ehcache.EhCacheManager">
+		<property name="cacheManagerConfigFile" value="classpath:shiro-ehcache.xml"/>
+	</bean>
+
+	<!--sessionManager:对shiro中的session进行全局设置,设置会话的保存时间-->
+	<bean id="sessionManager" class="org.apache.shiro.web.session.mgt.DefaultWebSessionManager">
+		<!--全局的过期时间,单位毫秒,24小时-->
+		<property name="globalSessionTimeout" value="86400000"/>
+		<!--是否删除失效的session-->
+		<property name="deleteInvalidSessions" value="true"/>
+	</bean>
+
+	<!--安全管理器-->
+	<bean id="securityManager" class="org.apache.shiro.web.mgt.DefaultWebSecurityManager">
+		<property name="realm" ref="myRealm"/>
+		<!--缓存管理器-->
+		<!--认证+授权:缓存的是某个用户的认证和授权信息-->
+		<property name="cacheManager" ref="cacheManager"/>
+		<!--session会话管理器-->
+		<property name="sessionManager" ref="sessionManager"/>
+	</bean>
+
+	<!--shiroFilter-->
+	<bean id="shiroFilter" class="org.apache.shiro.spring.web.ShiroFilterFactoryBean">
+		<property name="securityManager" ref="securityManager"/>
+		<property name="loginUrl" value="/login.jsp"/>
+
+		<!--配置访问资源的授权规则-->
+		<property name="filterChainDefinitions">
+			<value>
+				/css/** = anon
+				/js/** = anon
+				/layui/** = anon
+				/sys/vcode = anon
+				/sys/getMenus = anon
+				/sys/login = anon
+				/sys/index = anon
+				/druid/** = anon
+				/account/** = anon
+				/json/** = anon
+				/images/** = anon
+				/swagger-ui.html = anon
+				/webjars/** = anon
+				/v2/** = anon
+				/swagger-resources/** = anon
+				/api/login = anon
+				/loginOut = logout
+				/** = authc
+			</value>
+		</property>
+	</bean>
+
+</beans>
